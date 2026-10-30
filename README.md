@@ -23,7 +23,9 @@ winget install Gyan.FFmpeg
 
 Fecha e abre o terminal, depois dá dois cliques no `iniciar.bat`.
 
-Na primeira vez ele instala tudo sozinho (uns 5 a 10 minutos, baixa uns 3 GB). Depois abre direto no navegador em `http://127.0.0.1:8765`.
+Na primeira vez ele instala tudo sozinho (uns 5 a 15 minutos, baixa uns 3 GB). Tudo fica **dentro da pasta do Cifrador**, inclusive temporários e modelos, então deixa ela num disco com uns **8 GB livres**. Depois abre direto no navegador em `http://127.0.0.1:8765`.
+
+Toda vez que abre, ele **procura atualização no GitHub** e se atualiza sozinho.
 
 Também dá pra usar pelo terminal:
 

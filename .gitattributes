@@ -1,0 +1,2 @@
+# arquivos .bat precisam de CRLF no Windows, senão o goto quebra
+*.bat -text
