@@ -10,12 +10,26 @@ import webbrowser
 from pathlib import Path
 
 
+def port_in_use(port: int) -> bool:
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        return sock.connect_ex(("127.0.0.1", port)) == 0
+
+
 def serve(port: int) -> None:
+    url = f"http://127.0.0.1:{port}"
+
+    # já tem um Cifrador aberto: só mostra ele no navegador
+    if port_in_use(port):
+        print(f"\n  O Cifrador já está aberto. Abrindo {url}\n")
+        webbrowser.open(url)
+        return
+
     import uvicorn
 
     from .server import app
 
-    url = f"http://127.0.0.1:{port}"
     print(f"\n  Cifrador rodando em {url}\n  (Ctrl+C para parar)\n")
     threading.Timer(1.5, lambda: webbrowser.open(url)).start()
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")

@@ -1,38 +1,27 @@
 # Cifrador
 
-Sobe uma música (arquivo ou link) e recebe a **cifra pro violão**, sincronizada com o áudio, com o **capotraste que deixa tudo em acorde aberto**.
+Sobe uma música (arquivo ou link) e recebe a **cifra pro violão**, sincronizada com o áudio, com o **capotraste que deixa tudo em acorde aberto**. Dá pra baixar a cifra em **PDF** com a letra e os acordes em cima.
 
 Roda **100% no seu computador**. Nada vai pra nuvem.
 
-## Como abrir
+## Como instalar
 
-**Mac**
+1. Baixa o **[Cifrador.exe](https://github.com/EduBertozzi/cifrador/raw/main/Cifrador.exe)**
+2. Coloca ele numa pasta no disco que tem espaço (ex.: `D:\Cifrador`)
+3. **Dois cliques nele.** Só isso.
 
-```bash
-brew install ffmpeg
-cd cifrador
-chmod +x iniciar.sh
-./iniciar.sh
-```
+Na primeira vez ele instala tudo **dentro dessa pasta** (uns 10 a 20 minutos) e já abre no navegador. Nas próximas vezes abre direto.
 
-**Windows (PC com a GTX 1060)**
-
-```bat
-winget install Gyan.FFmpeg
-```
-
-Fecha e abre o terminal, depois dá dois cliques no `iniciar.bat`.
-
-Na primeira vez ele instala tudo sozinho (uns 5 a 15 minutos, baixa uns 3 GB). Tudo fica **dentro da pasta do Cifrador**, inclusive temporários e modelos, então deixa ela num disco com uns **8 GB livres**. Depois abre direto no navegador em `http://127.0.0.1:8765`.
-
-Toda vez que abre, ele **procura atualização no GitHub** e se atualiza sozinho.
-
-Também dá pra usar pelo terminal:
-
-```bash
-.venv/bin/python -m cifrador musica.mp3
-.venv/bin/python -m cifrador "https://youtu.be/..." --qualidade maximo
-```
+| Pergunta | Resposta |
+|---|---|
+| Vai encher o meu C:? | **Não.** Tudo fica numa pasta `Cifrador-dados` do lado do .exe: Python, PyTorch, modelos, temporários, músicas |
+| Quanto espaço precisa? | Uns **8 GB** com placa NVIDIA, uns 3 GB sem. Ele confere antes de começar |
+| A internet caiu no meio | Ele **continua sozinho** de onde parou. Se fechar, abre de novo que continua |
+| Pode apagar alguma coisa? | **Nunca.** Ele não apaga nada que já instalou |
+| Precisa instalar Python, ffmpeg...? | **Não**, ele baixa tudo sozinho pra dentro da pasta |
+| E as atualizações? | Toda vez que abre, ele puxa a versão mais nova daqui do GitHub |
+| O Windows avisou "protegeu o computador" | Normal pra programa novo sem assinatura: **Mais informações → Executar assim mesmo** |
+| Quero desinstalar | Apaga a pasta. Pronto |
 
 ## Por que ele é preciso
 
@@ -73,6 +62,7 @@ A nota final pesa pelo tempo que cada acorde toca na música. Um acorde chato qu
 | **Com letra / Compassos** | Cifra com a letra (Whisper) ou grade de compassos |
 | **Clicar num acorde** | Pula o áudio pra ali |
 | **Espaço** | Play e pause |
+| **Baixar PDF** | Cifra pronta pra imprimir, com a letra, os acordes em cima e os diagramas |
 | **Baixar .txt** | Exporta a cifra como está na tela |
 
 ## Rápido x Máxima precisão
@@ -97,8 +87,10 @@ cifrador/
   pipeline.py     junta tudo
   server.py       API local
   static/         interface
-musicas/          cada análise fica salva aqui (abre de novo sem reprocessar)
+launcher/         código do Cifrador.exe (Go)
 ```
+
+Pra rodar sem o .exe (Mac ou Linux): `pip install -r requirements.txt` e `python -m cifrador`.
 
 ## Limites honestos
 

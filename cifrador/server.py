@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import shutil
 import threading
 import time
@@ -19,8 +20,9 @@ from .shapes import shape_table
 log = logging.getLogger("cifrador")
 
 ROOT = Path(__file__).resolve().parent
-JOBS_DIR = ROOT.parent / "musicas"
-JOBS_DIR.mkdir(exist_ok=True)
+# o Cifrador.exe manda guardar as músicas fora da pasta do código
+JOBS_DIR = Path(os.environ.get("CIFRADOR_MUSICAS", ROOT.parent / "musicas"))
+JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="Cifrador")
 

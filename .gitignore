@@ -5,3 +5,5 @@ musicas/*
 *.whl
 _temp/
 _modelos/
+Cifrador-dados/
+launcher/Cifrador.exe
