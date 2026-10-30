@@ -1,0 +1,26 @@
+# núcleo
+torch
+librosa
+soundfile
+soxr
+audioop-lts; python_version >= "3.13"
+numpy
+
+# modelos de acorde
+lv-chordia
+transformers
+huggingface_hub
+
+# separação de stems (Demucs oficial para PyTorch 2.x)
+demucs-infer
+
+# letra
+faster-whisper
+
+# links do YouTube etc.
+yt-dlp
+
+# servidor
+fastapi
+uvicorn
+python-multipart
