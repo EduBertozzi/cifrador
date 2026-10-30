@@ -424,9 +424,11 @@ func run(program string, args []string, dir string) {
 	cmd := exec.Command(program, args...)
 	cmd.Dir = dir
 	cmd.Env = env
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
+	// io.MultiWriter não é um arquivo, então o Go cria canais novos e copia a saída pro console.
+	// Repassar o console direto quebra em alguns ambientes ("handle inválido")
+	cmd.Stdout = io.MultiWriter(os.Stdout)
+	cmd.Stderr = io.MultiWriter(os.Stderr)
+	// sem teclado: nem o Python nem o uv precisam, e evita erro de "handle inválido"
 	if err := cmd.Run(); err != nil {
 		fail("comando falhou: "+filepath.Base(program)+" "+strings.Join(args, " "), err)
 	}
