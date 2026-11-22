@@ -19,6 +19,7 @@ def port_in_use(port: int) -> bool:
 
 def serve(port: int) -> None:
     url = f"http://127.0.0.1:{port}"
+    print("  Ligando o servidor...", flush=True)
 
     # já tem um Cifrador aberto: só mostra ele no navegador
     if port_in_use(port):
@@ -30,8 +31,10 @@ def serve(port: int) -> None:
 
     from .server import app
 
-    print(f"\n  Cifrador rodando em {url}\n  (Ctrl+C para parar)\n")
-    threading.Timer(1.5, lambda: webbrowser.open(url)).start()
+    print(f"\n  Cifrador aberto em {url}", flush=True)
+    print("  Se o navegador não abrir sozinho, cola esse endereço nele.", flush=True)
+    print("  A IA termina de carregar em segundo plano (na primeira vez leva 1 ou 2 minutos).\n", flush=True)
+    threading.Timer(1.0, lambda: webbrowser.open(url)).start()
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
 
 
@@ -69,6 +72,13 @@ def run_cli(source: str, quality: str, lyrics: bool) -> None:
 
 
 def main() -> None:
+    import sys
+
+    # a saída vai pra janela do Cifrador.exe: manda cada linha na hora
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:  # noqa: BLE001
+        pass
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(prog="cifrador")
     parser.add_argument("musica", nargs="?", help="arquivo de áudio ou link (opcional)")

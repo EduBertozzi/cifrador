@@ -14,10 +14,36 @@ from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
 
-from .pipeline import Options, analyze
 from .shapes import shape_table
 
 log = logging.getLogger("cifrador")
+
+# a IA (PyTorch etc.) é pesada pra carregar: o site abre na hora e ela carrega em segundo plano
+_pipeline = {}
+_pipeline_ready = threading.Event()
+
+
+def _load_pipeline() -> None:
+    try:
+        from . import pipeline
+        from .recognizers import load_recognizers
+
+        _pipeline["module"] = pipeline
+        load_recognizers()
+    except Exception:  # noqa: BLE001
+        log.error(traceback.format_exc())
+    finally:
+        _pipeline_ready.set()
+        print("  IA carregada, pode mandar a música.", flush=True)
+
+
+
+
+def _start_loading() -> None:
+    # espera a página abrir no navegador antes de começar a carregar a IA
+    time.sleep(4)
+    _load_pipeline()
+
 
 ROOT = Path(__file__).resolve().parent
 # o Cifrador.exe manda guardar as músicas fora da pasta do código
@@ -25,6 +51,11 @@ JOBS_DIR = Path(os.environ.get("CIFRADOR_MUSICAS", ROOT.parent / "musicas"))
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="Cifrador")
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    threading.Thread(target=_start_loading, daemon=True).start()
 
 # modelos pesados: uma música por vez
 executor = ThreadPoolExecutor(max_workers=1)
@@ -37,9 +68,16 @@ def _set(job_id: str, **fields) -> None:
         jobs[job_id].update(fields)
 
 
-def _run(job_id: str, upload: Path | None, url: str | None, options: Options) -> None:
+def _run(job_id: str, upload: Path | None, url: str | None, quality: str, lyrics: bool) -> None:
     folder = JOBS_DIR / job_id
     try:
+        if not _pipeline_ready.is_set():
+            _set(job_id, status="running", stage="Carregando a IA (só na primeira música)", progress=0.01)
+            _pipeline_ready.wait()
+        pipeline = _pipeline.get("module")
+        if pipeline is None:
+            from . import pipeline
+        options = pipeline.Options(quality=quality, lyrics=lyrics)
         _set(job_id, status="running", stage="Começando", progress=0.01)
         if url:
             _set(job_id, stage="Baixando do link", progress=0.02)
@@ -50,7 +88,7 @@ def _run(job_id: str, upload: Path | None, url: str | None, options: Options) ->
         def report(stage: str, value: float) -> None:
             _set(job_id, stage=stage, progress=round(value, 3))
 
-        result = analyze(upload, folder, options, report)
+        result = pipeline.analyze(upload, folder, options, report)
         _set(job_id, status="done", result=result, title=result["title"])
     except Exception as error:  # noqa: BLE001
         log.error(traceback.format_exc())
@@ -88,10 +126,9 @@ async def create_job(
         (folder / "title.txt").write_text(title, encoding="utf-8")
         url = ""
 
-    options = Options(quality=quality, lyrics=lyrics)
     with lock:
         jobs[job_id] = {"id": job_id, "status": "queued", "stage": "Na fila", "progress": 0.0, "title": title, "created": time.time()}
-    executor.submit(_run, job_id, upload_path, url or None, options)
+    executor.submit(_run, job_id, upload_path, url or None, quality, lyrics)
     return {"id": job_id}
 
 
