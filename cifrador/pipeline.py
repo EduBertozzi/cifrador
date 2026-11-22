@@ -58,7 +58,8 @@ def analyze(
             stems = separate(original, work_dir / "stems", options.quality)
         except Exception as error:  # noqa: BLE001
             log.exception("Falha na separação")
-            warnings.append(f"Separação de stems falhou ({error}). Usei só a mixagem.")
+            # o erro técnico vai pro log, o usuário vê uma frase clara
+            warnings.append("Não deu pra separar os instrumentos nessa música, então usei o áudio inteiro. Pode ficar um pouco menos preciso.")
 
     versions = {"mix": y_full}
     drums = None
@@ -136,7 +137,7 @@ def analyze(
             lyrics = transcribe(stems["vocals"], options.language)
         except Exception as error:  # noqa: BLE001
             log.exception("Falha na letra")
-            warnings.append(f"Não consegui transcrever a letra ({error}).")
+            warnings.append("Não consegui tirar a letra dessa música. Os acordes estão normais.")
     elif options.lyrics:
         warnings.append("Letra precisa da separação de stems ligada.")
 
