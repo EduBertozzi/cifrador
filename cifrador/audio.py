@@ -12,11 +12,57 @@ import soundfile as sf
 ANALYSIS_SR = 22050
 
 
+def spotify_to_search(url: str) -> str:
+    """Link do Spotify vira uma busca no YouTube ("ytsearch1:música artista").
+
+    O áudio do Spotify é protegido, então pega só o nome e o artista da página
+    e acha a mesma música no YouTube.
+    """
+    import html
+    import re
+    import urllib.request
+
+    request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept-Language": "pt-BR,en;q=0.8"})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        page = response.read().decode("utf-8", errors="ignore")
+
+    def meta(name: str) -> str:
+        # aceita property="og:title" ou name="og:title", em qualquer ordem
+        for pattern in (
+            rf'<meta[^>]+(?:property|name)="{re.escape(name)}"[^>]+content="([^"]*)"',
+            rf'<meta[^>]+content="([^"]*)"[^>]+(?:property|name)="{re.escape(name)}"',
+        ):
+            found = re.search(pattern, page)
+            if found:
+                return html.unescape(found.group(1)).strip()
+        return ""
+
+    song = meta("og:title")
+    artist = meta("music:musician_description")
+    if not artist:
+        # og:description vem tipo "Rick Astley · Álbum · Song · 1987"
+        artist = meta("og:description").split("·")[0].strip()
+    if not song:
+        # <title> vem tipo "Música - Song, Lyrics... by Artista | Spotify"
+        title = re.search(r"<title>([^<]*)</title>", page)
+        if title:
+            song = html.unescape(title.group(1)).split(" - ")[0].strip()
+    if not song:
+        raise RuntimeError("Não consegui ler o nome da música no link do Spotify. Cola o link do YouTube dela.")
+    return f"ytsearch1:{song} {artist} audio".strip()
+
+
 def download_from_link(url: str, folder: Path) -> Path:
-    """Baixa o áudio de YouTube, SoundCloud etc. usando o yt-dlp."""
+    """Baixa o áudio de YouTube, SoundCloud etc. usando o yt-dlp. Link do Spotify vira busca no YouTube."""
     import yt_dlp
 
     folder.mkdir(parents=True, exist_ok=True)
+    if "spotify.com" in url or url.startswith("spotify:"):
+        if url.startswith("spotify:track:"):
+            url = "https://open.spotify.com/track/" + url.split(":")[-1]
+        if "/track/" not in url:
+            raise RuntimeError("Do Spotify só dá link de música (não de playlist ou álbum).")
+        url = spotify_to_search(url)
     options = {
         "format": "bestaudio/best",
         "outtmpl": str(folder / "original.%(ext)s"),
@@ -27,6 +73,9 @@ def download_from_link(url: str, folder: Path) -> Path:
     }
     with yt_dlp.YoutubeDL(options) as downloader:
         info = downloader.extract_info(url, download=True)
+    # busca devolve uma lista com 1 resultado
+    if info.get("entries"):
+        info = info["entries"][0]
     title = info.get("title") or "Música"
     path = folder / "original.wav"
     (folder / "title.txt").write_text(title, encoding="utf-8")
